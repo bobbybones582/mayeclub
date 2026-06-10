@@ -81,6 +81,17 @@
             color: #000;
         }
 
+        .admin-panel-btn {
+            border-color: #a855f7;
+            color: #a855f7;
+            display: none; /* Dynamic visibility check */
+        }
+
+        .admin-panel-btn:hover {
+            background-color: #a855f7;
+            color: #fff;
+        }
+
         .logout-btn {
             border-color: var(--text-muted);
             color: var(--text-muted);
@@ -93,7 +104,7 @@
             color: #fff;
         }
 
-        /* Authentication Modal Overlay */
+        /* Modals (Auth & Admin Panel) */
         .modal-overlay {
             position: fixed;
             top: 0;
@@ -121,9 +132,11 @@
             border: 1px solid var(--border-color);
             border-radius: 12px;
             width: 100%;
-            max-width: 400px;
+            max-width: 450px;
             padding: 30px;
             position: relative;
+            max-height: 90vh;
+            overflow-y: auto;
         }
 
         .close-modal {
@@ -144,7 +157,7 @@
             text-align: center;
         }
 
-        .auth-form {
+        .auth-form, .admin-form {
             display: flex;
             flex-direction: column;
             gap: 15px;
@@ -156,13 +169,19 @@
             gap: 5px;
         }
 
+        .form-row {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+        }
+
         .form-group label {
             font-size: 0.85rem;
             color: var(--text-muted);
             font-weight: 600;
         }
 
-        .form-group input {
+        .form-group input, .form-group select {
             background-color: var(--bg-main);
             border: 1px solid var(--border-color);
             color: var(--text-main);
@@ -172,7 +191,7 @@
             outline: none;
         }
 
-        .form-group input:focus {
+        .form-group input:focus, .form-group select:focus {
             border-color: var(--primary-accent);
         }
 
@@ -186,6 +205,11 @@
             font-size: 1rem;
             cursor: pointer;
             margin-top: 10px;
+        }
+
+        .admin-submit-btn {
+            background-color: #a855f7;
+            color: white;
         }
 
         .toggle-auth-mode {
@@ -321,12 +345,13 @@
         <div class="logo">Maye<span>Club</span></div>
         <div class="auth-nav-container">
             <span id="userGreeting" class="user-greeting"></span>
+            <button id="adminPanelBtn" class="auth-btn admin-panel-btn" onclick="toggleAdminModal(true)">Panel</button>
             <button id="loginTriggerBtn" class="auth-btn" onclick="toggleModal(true)">Sign In</button>
             <button id="logoutBtn" class="auth-btn logout-btn" onclick="handleLogout()">Sign Out</button>
         </div>
     </header>
 
-    <div id="authModal" class="modal-overlay" onclick="handleOverlayClick(event)">
+    <div id="authModal" class="modal-overlay" onclick="handleOverlayClick(event, 'authModal')">
         <div class="auth-modal">
             <button class="close-modal" onclick="toggleModal(false)">&times;</button>
             <h2 id="modalTitle" class="modal-title">Sign In to MayeClub</h2>
@@ -340,13 +365,80 @@
                     <label for="password">Password</label>
                     <input type="password" id="password" required placeholder="••••••••" minlength="6">
                 </div>
-                <div id="authError" class="auth-error">Error message placeholder</div>
+                <div id="authError" class="auth-error"></div>
                 <button type="submit" id="modalSubmitBtn" class="submit-btn">Sign In</button>
             </form>
             
             <div id="toggleAuthMode" class="toggle-auth-mode" onclick="switchAuthMode()">
                 Don't have an account? <span>Sign Up</span>
             </div>
+        </div>
+    </div>
+
+    <div id="adminModal" class="modal-overlay" onclick="handleOverlayClick(event, 'adminModal')">
+        <div class="auth-modal">
+            <button class="close-modal" onclick="toggleAdminModal(false)">&times;</button>
+            <h2 class="modal-title" style="color: #a855f7;">Create New Bet Pick</h2>
+            
+            <form id="adminForm" class="admin-form" onsubmit="handleBetSubmit(event)">
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="betSport">Sport League</label>
+                        <select id="betSport" onchange="updatePropTypes()" required>
+                            <option value="nba">NBA</option>
+                            <option value="nhl">NHL</option>
+                            <option value="mlb">MLB</option>
+                            <option value="wnba">WNBA</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="betPlayer">Player Name</label>
+                        <input type="text" id="betPlayer" required placeholder="e.g. LeBron James">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="betPropType">Prop Type</label>
+                        <select id="betPropType" required>
+                            </select>
+                    </div>
+                    <div class="form-group">
+                        <label for="betOverUnder">Over / Under</label>
+                        <select id="betOverUnder" required>
+                            <option value="Over">Over</option>
+                            <option value="Under">Under</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="betLine">Line Value</label>
+                        <input type="number" id="betLine" step="0.5" required placeholder="e.g. 24.5">
+                    </div>
+                    <div class="form-group">
+                        <label for="betOdds">Odds / Multiplier</label>
+                        <input type="text" id="betOdds" required placeholder="e.g. -110 or 3x">
+                    </div>
+                </div>
+
+                <div class="form-row">
+                    <div class="form-group">
+                        <label for="betSportsbook">Sportsbook</label>
+                        <input type="text" id="betSportsbook" required placeholder="e.g. PrizePicks, DraftKings">
+                    </div>
+                    <div class="form-group">
+                        <label for="betAccess">Tier Access</label>
+                        <select id="betAccess" required>
+                            <option value="free">Free Public Pick</option>
+                            <option value="paid">MayeClub VIP Pick</option>
+                        </select>
+                    </div>
+                </div>
+
+                <button type="submit" class="submit-btn admin-submit-btn">Publish Pick</button>
+            </form>
         </div>
     </div>
 
@@ -445,22 +537,47 @@
 
         let isSignUpMode = false;
 
-        // Automatically track and verify user login state (runs instantly on load & refresh)
-        window.addEventListener('DOMContentLoaded', async () => {
-            // Check for an active session cached in LocalStorage
-            const { data: { session }, error } = await supabaseClient.auth.getSession();
-            updateUIForUser(session?.user || null);
+        // Prop Categories Dictionary mapping directly to specific sports
+        const propOptions = {
+            nba: ["Points", "Rebounds", "Assists", "3-PT Made", "Pts+Reb+Ast"],
+            wnba: ["Points", "Rebounds", "Assists", "3-PT Made", "Steals"],
+            nhl: ["Goals", "Assists", "Points", "Shots on Goal", "Saves"],
+            mlb: ["Hits", "Home Runs", "Strikeouts", "Total Bases", "RBIs"]
+        };
 
-            // Set up an active listener so if user state shifts anywhere, the page updates smoothly
-            supabaseClient.auth.onAuthStateChange((event, session) => {
-                updateUIForUser(session?.user || null);
+        // Automatically track and verify user login state
+        window.addEventListener('DOMContentLoaded', async () => {
+            updatePropTypes(); // Hydrate the input picks prop dropdown initially
+            
+            const { data: { session } } = await supabaseClient.auth.getSession();
+            await handleStateTransition(session?.user || null);
+
+            supabaseClient.auth.onAuthStateChange(async (event, session) => {
+                await handleStateTransition(session?.user || null);
             });
         });
 
-        // Toggle UI display depending on whether user profile is authenticated
-        function updateUIForUser(user) {
+        // Run security checks to look up profile settings when a user connects
+        async function handleStateTransition(user) {
+            if (user) {
+                // Read profile matching this explicit authenticated session row to find if admin
+                const { data: profile } = await supabaseClient
+                    .from('profiles')
+                    .select('is_admin')
+                    .eq('id', user.id)
+                    .single();
+                
+                updateUIForUser(user, profile?.is_admin || false);
+            } else {
+                updateUIForUser(null, false);
+            }
+        }
+
+        // Toggle UI display variations across navigation profiles
+        function updateUIForUser(user, isAdmin) {
             const loginBtn = document.getElementById('loginTriggerBtn');
             const logoutBtn = document.getElementById('logoutBtn');
+            const adminBtn = document.getElementById('adminPanelBtn');
             const greeting = document.getElementById('userGreeting');
 
             if (user) {
@@ -468,15 +585,58 @@
                 greeting.style.display = 'block';
                 logoutBtn.style.display = 'block';
                 loginBtn.style.display = 'none';
-                toggleModal(false); // Shut open auth dialogs if user successfully gains access
+                adminBtn.style.display = isAdmin ? 'block' : 'none';
+                toggleModal(false);
             } else {
                 greeting.style.display = 'none';
                 logoutBtn.style.display = 'none';
+                adminBtn.style.display = 'none';
                 loginBtn.style.display = 'block';
             }
         }
 
-        // Handle Form Submissions (Login or Registration)
+        // Dynamically shift prop selections based on what sport is currently set in panel dropdown
+        function updatePropTypes() {
+            const sportSelect = document.getElementById('betSport').value;
+            const propSelect = document.getElementById('betPropType');
+            
+            propSelect.innerHTML = ""; // Clear values
+            propOptions[sportSelect].forEach(prop => {
+                const opt = document.createElement('option');
+                opt.value = prop;
+                opt.textContent = prop;
+                propSelect.appendChild(opt);
+            });
+        }
+
+        // Admin Panel submission to securely dump data inside Supabase tables
+        async function handleBetSubmit(e) {
+            e.preventDefault();
+
+            const sport = document.getElementById('betSport').value;
+            const player = document.getElementById('betPlayer').value;
+            const prop_type = document.getElementById('betPropType').value;
+            const over_under = document.getElementById('betOverUnder').value;
+            const line = parseFloat(document.getElementById('betLine').value);
+            const odds = document.getElementById('betOdds').value;
+            const sportsbook = document.getElementById('betSportsbook').value;
+            const is_paid = document.getElementById('betAccess').value === 'paid';
+
+            const { data, error } = await supabaseClient
+                .from('bets')
+                .insert([{ sport, player, prop_type, over_under, line, odds, sportsbook, is_paid }]);
+
+            if (error) {
+                alert("Error submitting pick: " + error.message);
+            } else {
+                alert("Pick published successfully!");
+                document.getElementById('adminForm').reset();
+                updatePropTypes();
+                toggleAdminModal(false);
+            }
+        }
+
+        // Handle Auth Sign In / Sign Up Submissions
         async function handleAuthSubmit(e) {
             e.preventDefault();
             const email = document.getElementById('email').value;
@@ -486,16 +646,16 @@
             errorDiv.style.display = 'none';
 
             if (isSignUpMode) {
-                // Register a brand new profile
                 const { data, error } = await supabaseClient.auth.signUp({ email, password });
                 if (error) {
                     showError(error.message);
                 } else if (data.user && data.session === null) {
-                    alert("Registration successful! Check your email inbox to verify your account before logging in.");
+                    alert("Registration successful! Verify via email if configured, or sign in.");
                     toggleModal(false);
+                } else if (data.user && data.session) {
+                    await handleStateTransition(data.user);
                 }
             } else {
-                // Authenticate existing credentials
                 const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) showError(error.message);
             }
@@ -507,37 +667,39 @@
             if (error) alert("Error logging out: " + error.message);
         }
 
-        // Intercept Modal adjustments and clean up errors on visual transitions
+        // Modal Management utilities
         function toggleModal(shouldOpen) {
             const modal = document.getElementById('authModal');
             document.getElementById('authError').style.display = 'none';
             document.getElementById('authForm').reset();
-            
-            if (shouldOpen) {
-                modal.classList.add('open');
-            } else {
-                modal.classList.remove('open');
+            if (shouldOpen) modal.classList.add('open');
+            else modal.classList.remove('open');
+        }
+
+        function toggleAdminModal(shouldOpen) {
+            const modal = document.getElementById('adminModal');
+            if (shouldOpen) modal.classList.add('open');
+            else modal.classList.remove('open');
+        }
+
+        function handleOverlayClick(e, modalId) {
+            if (e.target.id === modalId) {
+                if (modalId === 'authModal') toggleModal(false);
+                if (modalId === 'adminModal') toggleAdminModal(false);
             }
         }
 
-        function handleOverlayClick(e) {
-            if (e.target.id === 'authModal') toggleModal(false);
-        }
-
-        // Display errors cleanly inside the modal
         function showError(msg) {
             const errorDiv = document.getElementById('authError');
             errorDiv.innerText = msg;
             errorDiv.style.display = 'block';
         }
 
-        // Switch modal between Sign In layout and Sign Up layout
         function switchAuthMode() {
             isSignUpMode = !isSignUpMode;
             const title = document.getElementById('modalTitle');
             const submitBtn = document.getElementById('modalSubmitBtn');
             const toggleText = document.getElementById('toggleAuthMode');
-            document.getElementById('authError').style.display = 'none';
 
             if (isSignUpMode) {
                 title.innerText = "Create MayeClub Account";
@@ -550,16 +712,13 @@
             }
         }
 
-        // Core UI Navigation function for swapping display sport types
         function openSport(evt, sportId) {
             const contents = document.getElementsByClassName("sports-content");
-            for (let i = 0; i < contents.length; i++) {
-                contents[i].classList.remove("active");
-            }
+            for (let i = 0; i < contents.length; i++) contents[i].classList.remove("active");
+            
             const tabs = document.getElementsByClassName("sport-tab");
-            for (let i = 0; i < tabs.length; i++) {
-                tabs[i].classList.remove("active");
-            }
+            for (let i = 0; i < tabs.length; i++) tabs[i].classList.remove("active");
+            
             document.getElementById(sportId).classList.add("active");
             evt.currentTarget.classList.add("active");
         }
