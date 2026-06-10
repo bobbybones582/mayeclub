@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>MayeClub - Sports Picks</title>
+    <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
     <style>
         /* Base Dark Theme Variables */
         :root {
@@ -15,6 +16,7 @@
             --primary-accent: #ffd700; /* Gold for VIP/MayeClub */
             --secondary-accent: #00e676; /* Green for Free Bets/Success */
             --border-color: #262b40;
+            --danger-color: #ff4d4d;
         }
 
         * {
@@ -50,17 +52,163 @@
             color: var(--primary-accent);
         }
 
-        .vip-badge {
-            background: linear-gradient(135deg, #ffd700, #ffa500);
-            color: #000;
-            padding: 6px 14px;
-            border-radius: 20px;
-            font-weight: 700;
-            font-size: 0.85rem;
-            text-transform: uppercase;
+        /* Auth UI Elements in Navbar */
+        .auth-nav-container {
+            display: flex;
+            align-items: center;
+            gap: 15px;
         }
 
-        /* Container & Sport Tabs */
+        .user-greeting {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .auth-btn {
+            background-color: transparent;
+            border: 1px solid var(--primary-accent);
+            color: var(--primary-accent);
+            padding: 8px 16px;
+            border-radius: 6px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .auth-btn:hover {
+            background-color: var(--primary-accent);
+            color: #000;
+        }
+
+        .logout-btn {
+            border-color: var(--text-muted);
+            color: var(--text-muted);
+            display: none;
+        }
+
+        .logout-btn:hover {
+            background-color: var(--danger-color);
+            border-color: var(--danger-color);
+            color: #fff;
+        }
+
+        /* Authentication Modal Overlay */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0, 0, 0, 0.75);
+            backdrop-filter: blur(4px);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 1000;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.2s ease;
+        }
+
+        .modal-overlay.open {
+            opacity: 1;
+            pointer-events: auto;
+        }
+
+        .auth-modal {
+            background-color: var(--bg-card);
+            border: 1px solid var(--border-color);
+            border-radius: 12px;
+            width: 100%;
+            max-width: 400px;
+            padding: 30px;
+            position: relative;
+        }
+
+        .close-modal {
+            position: absolute;
+            top: 15px;
+            right: 15px;
+            background: none;
+            border: none;
+            color: var(--text-muted);
+            font-size: 1.2rem;
+            cursor: pointer;
+        }
+
+        .modal-title {
+            font-size: 1.4rem;
+            margin-bottom: 20px;
+            font-weight: 700;
+            text-align: center;
+        }
+
+        .auth-form {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .form-group {
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+        }
+
+        .form-group label {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            font-weight: 600;
+        }
+
+        .form-group input {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            color: var(--text-main);
+            padding: 10px 12px;
+            border-radius: 6px;
+            font-size: 1rem;
+            outline: none;
+        }
+
+        .form-group input:focus {
+            border-color: var(--primary-accent);
+        }
+
+        .submit-btn {
+            background-color: var(--primary-accent);
+            color: #000;
+            border: none;
+            padding: 12px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 1rem;
+            cursor: pointer;
+            margin-top: 10px;
+        }
+
+        .toggle-auth-mode {
+            text-align: center;
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-top: 15px;
+            cursor: pointer;
+        }
+
+        .toggle-auth-mode span {
+            color: var(--primary-accent);
+            text-decoration: underline;
+        }
+
+        .auth-error {
+            color: var(--danger-color);
+            font-size: 0.85rem;
+            text-align: center;
+            display: none;
+        }
+
+        /* Main App Container & Sport Tabs */
         .container {
             max-width: 1200px;
             margin: 40px auto;
@@ -100,7 +248,7 @@
 
         /* Dashboard Content Split Grid */
         .sports-content {
-            display: none; /* Hidden by default, toggled with JS */
+            display: none; 
         }
 
         .sports-content.active {
@@ -155,7 +303,6 @@
         .free-badge { background-color: rgba(0, 230, 118, 0.15); color: var(--secondary-accent); }
         .vip-badge-small { background-color: rgba(255, 215, 0, 0.15); color: var(--primary-accent); }
 
-        /* Empty State Styling */
         .empty-message {
             text-align: center;
             padding: 40px 20px;
@@ -170,14 +317,40 @@
 </head>
 <body>
 
-    <!-- Top Navigation Bar -->
     <header>
         <div class="logo">Maye<span>Club</span></div>
-        <div class="vip-badge">MayeClub VIP</div>
+        <div class="auth-nav-container">
+            <span id="userGreeting" class="user-greeting"></span>
+            <button id="loginTriggerBtn" class="auth-btn" onclick="toggleModal(true)">Sign In</button>
+            <button id="logoutBtn" class="auth-btn logout-btn" onclick="handleLogout()">Sign Out</button>
+        </div>
     </header>
 
+    <div id="authModal" class="modal-overlay" onclick="handleOverlayClick(event)">
+        <div class="auth-modal">
+            <button class="close-modal" onclick="toggleModal(false)">&times;</button>
+            <h2 id="modalTitle" class="modal-title">Sign In to MayeClub</h2>
+            
+            <form id="authForm" class="auth-form" onsubmit="handleAuthSubmit(event)">
+                <div class="form-group">
+                    <label for="email">Email Address</label>
+                    <input type="email" id="email" required placeholder="name@example.com">
+                </div>
+                <div class="form-group">
+                    <label for="password">Password</label>
+                    <input type="password" id="password" required placeholder="••••••••" minlength="6">
+                </div>
+                <div id="authError" class="auth-error">Error message placeholder</div>
+                <button type="submit" id="modalSubmitBtn" class="submit-btn">Sign In</button>
+            </form>
+            
+            <div id="toggleAuthMode" class="toggle-auth-mode" onclick="switchAuthMode()">
+                Don't have an account? <span>Sign Up</span>
+            </div>
+        </div>
+    </div>
+
     <div class="container">
-        <!-- Sports Tab Navigation -->
         <nav class="sports-nav">
             <button class="sport-tab active" onclick="openSport(event, 'nba')">NBA</button>
             <button class="sport-tab" onclick="openSport(event, 'nhl')">NHL</button>
@@ -185,7 +358,6 @@
             <button class="sport-tab" onclick="openSport(event, 'wnba')">WNBA</button>
         </nav>
 
-        <!-- NBA Content Section -->
         <div id="nba" class="sports-content active">
             <div class="bet-sections-grid">
                 <div class="bet-column">
@@ -205,7 +377,6 @@
             </div>
         </div>
 
-        <!-- NHL Content Section -->
         <div id="nhl" class="sports-content">
             <div class="bet-sections-grid">
                 <div class="bet-column">
@@ -225,7 +396,6 @@
             </div>
         </div>
 
-        <!-- MLB Content Section -->
         <div id="mlb" class="sports-content">
             <div class="bet-sections-grid">
                 <div class="bet-column">
@@ -245,7 +415,6 @@
             </div>
         </div>
 
-        <!-- WNBA Content Section -->
         <div id="wnba" class="sports-content">
             <div class="bet-sections-grid">
                 <div class="bet-column">
@@ -264,25 +433,133 @@
                 </div>
             </div>
         </div>
-
     </div>
 
-    <!-- Client-Side Tab Switching Logic -->
     <script>
+        // Your Verified Supabase Credentials
+        const SUPABASE_URL = "https://iytaqrpqdafqwolnfifp.supabase.co";
+        const SUPABASE_ANON_KEY = "sb_publishable_bS8Iem5lEFZdrE3Ddnwe9Q_hlcWt0zR";
+
+        // Initialize Supabase Client
+        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+
+        let isSignUpMode = false;
+
+        // Automatically track and verify user login state (runs instantly on load & refresh)
+        window.addEventListener('DOMContentLoaded', async () => {
+            // Check for an active session cached in LocalStorage
+            const { data: { session }, error } = await supabase.auth.getSession();
+            updateUIForUser(session?.user || null);
+
+            // Set up an active listener so if user state shifts anywhere, the page updates smoothly
+            supabase.auth.onAuthStateChange((event, session) => {
+                updateUIForUser(session?.user || null);
+            });
+        });
+
+        // Toggle UI display depending on whether user profile is authenticated
+        function updateUIForUser(user) {
+            const loginBtn = document.getElementById('loginTriggerBtn');
+            const logoutBtn = document.getElementById('logoutBtn');
+            const greeting = document.getElementById('userGreeting');
+
+            if (user) {
+                greeting.innerText = `Welcome, ${user.email}`;
+                greeting.style.display = 'block';
+                logoutBtn.style.display = 'block';
+                loginBtn.style.display = 'none';
+                toggleModal(false); // Shut open auth dialogs if user successfully gains access
+            } else {
+                greeting.style.display = 'none';
+                logoutBtn.style.display = 'none';
+                loginBtn.style.display = 'block';
+            }
+        }
+
+        // Handle Form Submissions (Login or Registration)
+        async function handleAuthSubmit(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            const errorDiv = document.getElementById('authError');
+            
+            errorDiv.style.display = 'none';
+
+            if (isSignUpMode) {
+                // Register a brand new profile
+                const { data, error } = await supabase.auth.signUp({ email, password });
+                if (error) {
+                    showError(error.message);
+                } else if (data.user && data.session === null) {
+                    alert("Registration successful! Check your email inbox to verify your account before logging in.");
+                    toggleModal(false);
+                }
+            } else {
+                // Authenticate existing credentials
+                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                if (error) showError(error.message);
+            }
+        }
+
+        // Handle Logout Action
+        async function handleLogout() {
+            const { error } = await supabase.auth.signOut();
+            if (error) alert("Error logging out: " + error.message);
+        }
+
+        // Intercept Modal adjustments and clean up errors on visual transitions
+        function toggleModal(shouldOpen) {
+            const modal = document.getElementById('authModal');
+            document.getElementById('authError').style.display = 'none';
+            document.getElementById('authForm').reset();
+            
+            if (shouldOpen) {
+                modal.classList.add('open');
+            } else {
+                modal.classList.remove('open');
+            }
+        }
+
+        function handleOverlayClick(e) {
+            if (e.target.id === 'authModal') toggleModal(false);
+        }
+
+        // Display errors cleanly inside the modal
+        function showError(msg) {
+            const errorDiv = document.getElementById('authError');
+            errorDiv.innerText = msg;
+            errorDiv.style.display = 'block';
+        }
+
+        // Switch modal between Sign In layout and Sign Up layout
+        function switchAuthMode() {
+            isSignUpMode = !isSignUpMode;
+            const title = document.getElementById('modalTitle');
+            const submitBtn = document.getElementById('modalSubmitBtn');
+            const toggleText = document.getElementById('toggleAuthMode');
+            document.getElementById('authError').style.display = 'none';
+
+            if (isSignUpMode) {
+                title.innerText = "Create MayeClub Account";
+                submitBtn.innerText = "Sign Up";
+                toggleText.innerHTML = "Already have an account? <span>Sign In</span>";
+            } else {
+                title.innerText = "Sign In to MayeClub";
+                submitBtn.innerText = "Sign In";
+                toggleText.innerHTML = "Don't have an account? <span>Sign Up</span>";
+            }
+        }
+
+        // Core UI Navigation function for swapping display sport types
         function openSport(evt, sportId) {
-            // Hide all sport content divs
             const contents = document.getElementsByClassName("sports-content");
             for (let i = 0; i < contents.length; i++) {
                 contents[i].classList.remove("active");
             }
-
-            // Remove the 'active' class from all tabs
             const tabs = document.getElementsByClassName("sport-tab");
             for (let i = 0; i < tabs.length; i++) {
                 tabs[i].classList.remove("active");
             }
-
-            // Show current sport content div, add 'active' class to clicked button
             document.getElementById(sportId).classList.add("active");
             evt.currentTarget.classList.add("active");
         }
