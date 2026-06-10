@@ -84,7 +84,7 @@
         .admin-panel-btn {
             border-color: #a855f7;
             color: #a855f7;
-            display: none; /* Dynamic visibility check */
+            display: none; 
         }
 
         .admin-panel-btn:hover {
@@ -291,7 +291,7 @@
             }
         }
 
-        /* Bet Section Cards */
+        /* Bet Section Columns */
         .bet-column {
             background-color: var(--bg-card);
             border: 1px solid var(--border-color);
@@ -336,6 +336,95 @@
             border: 1px dashed var(--border-color);
             border-radius: 8px;
             background-color: rgba(255,255,255,0.01);
+        }
+
+        /* Dynamic Bet Pick Cards styling */
+        .bets-list {
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        .bet-card {
+            background-color: var(--bg-main);
+            border: 1px solid var(--border-color);
+            border-radius: 8px;
+            padding: 16px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            transition: transform 0.2s ease;
+        }
+
+        .bet-card:hover {
+            transform: translateY(-2px);
+            border-color: #3b4261;
+        }
+
+        .bet-card-left {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .bet-card-player {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--text-main);
+        }
+
+        .bet-card-details {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        .bet-card-details span {
+            color: var(--text-main);
+            font-weight: 600;
+        }
+
+        .bet-card-right {
+            text-align: right;
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .bet-card-odds {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: var(--secondary-accent);
+        }
+
+        .bet-card-book {
+            font-size: 0.75rem;
+            background-color: rgba(255, 255, 255, 0.05);
+            padding: 2px 6px;
+            border-radius: 4px;
+            color: var(--text-muted);
+            border: 1px solid var(--border-color);
+        }
+
+        /* VIP Locked Screen Styling */
+        .locked-vip-box {
+            text-align: center;
+            padding: 30px 15px;
+            border: 1px solid rgba(255, 215, 0, 0.2);
+            background: linear-gradient(180deg, rgba(22,25,37,1) 0%, rgba(27,24,17,0.3) 100%);
+            border-radius: 8px;
+        }
+
+        .locked-title {
+            color: var(--primary-accent);
+            font-weight: 700;
+            margin-bottom: 8px;
+            font-size: 1.1rem;
+        }
+
+        .locked-desc {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
         }
     </style>
 </head>
@@ -457,14 +546,18 @@
                         <h2 class="free-title">Free Bets</h2>
                         <span class="section-badge free-badge">Public Access</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="nba-free-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
                 <div class="bet-column">
                     <div class="column-header">
                         <h2 class="vip-title">MayeClub Bets</h2>
                         <span class="section-badge vip-badge-small">VIP Members Only</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="nba-paid-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -476,14 +569,18 @@
                         <h2 class="free-title">Free Bets</h2>
                         <span class="section-badge free-badge">Public Access</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="nhl-free-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
                 <div class="bet-column">
                     <div class="column-header">
                         <h2 class="vip-title">MayeClub Bets</h2>
                         <span class="section-badge vip-badge-small">VIP Members Only</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="nhl-paid-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -495,14 +592,18 @@
                         <h2 class="free-title">Free Bets</h2>
                         <span class="section-badge free-badge">Public Access</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="mlb-free-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
                 <div class="bet-column">
                     <div class="column-header">
                         <h2 class="vip-title">MayeClub Bets</h2>
                         <span class="section-badge vip-badge-small">VIP Members Only</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="mlb-paid-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -514,14 +615,18 @@
                         <h2 class="free-title">Free Bets</h2>
                         <span class="section-badge free-badge">Public Access</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="wnba-free-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
                 <div class="bet-column">
                     <div class="column-header">
                         <h2 class="vip-title">MayeClub Bets</h2>
                         <span class="section-badge vip-badge-small">VIP Members Only</span>
                     </div>
-                    <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    <div id="wnba-paid-container" class="bets-list">
+                        <div class="empty-message">No bets in this sport at the moment, check back later!</div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -536,6 +641,7 @@
         const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let isSignUpMode = false;
+        let currentUser = null;
 
         // Prop Categories Dictionary mapping directly to specific sports
         const propOptions = {
@@ -559,18 +665,94 @@
 
         // Run security checks to look up profile settings when a user connects
         async function handleStateTransition(user) {
+            currentUser = user;
+            let isAdmin = false;
+
             if (user) {
-                // Read profile matching this explicit authenticated session row to find if admin
                 const { data: profile } = await supabaseClient
                     .from('profiles')
                     .select('is_admin')
                     .eq('id', user.id)
                     .single();
                 
-                updateUIForUser(user, profile?.is_admin || false);
-            } else {
-                updateUIForUser(null, false);
+                isAdmin = profile?.is_admin || false;
             }
+            
+            updateUIForUser(user, isAdmin);
+            fetchAndRenderBets(); // Fetch fresh picks whenever user state changes
+        }
+
+        // Fetch all published bets from the database and paint them on the layout
+        async function fetchAndRenderBets() {
+            const { data: bets, error } = await supabaseClient
+                .from('bets')
+                .select('*')
+                .order('created_at', { ascending: false });
+
+            if (error) {
+                console.error("Error fetching picks:", error.message);
+                return;
+            }
+
+            // List of leagues and target elements
+            const leagues = ['nba', 'nhl', 'mlb', 'wnba'];
+            
+            // Reset all containers to default empty states initially
+            leagues.forEach(league => {
+                document.getElementById(`${league}-free-container`).innerHTML = `<div class="empty-message">No bets in this sport at the moment, check back later!</div>`;
+                document.getElementById(`${league}-paid-container`).innerHTML = `<div class="empty-message">No bets in this sport at the moment, check back later!</div>`;
+            });
+
+            // Tracking count of picks added to columns to clear out "empty-state" messaging flags
+            const counts = {
+                nba: { free: 0, paid: 0 },
+                nhl: { free: 0, paid: 0 },
+                mlb: { free: 0, paid: 0 },
+                wnba: { free: 0, paid: 0 }
+            };
+
+            bets.forEach(bet => {
+                const league = bet.sport.toLowerCase();
+                const isPaid = bet.is_paid;
+                const containerId = `${league}-${isPaid ? 'paid' : 'free'}-container`;
+                const container = document.getElementById(containerId);
+
+                // Clear the default empty state message on the first card insertion
+                if (isPaid && counts[league].paid === 0) container.innerHTML = "";
+                if (!isPaid && counts[league].free === 0) container.innerHTML = "";
+
+                if (isPaid && !currentUser) {
+                    // Lock VIP picks if the user is completely logged out
+                    if (counts[league].paid === 0) {
+                        container.innerHTML = `
+                            <div class="locked-vip-box">
+                                <div class="locked-title">🔒 MayeClub Premium Pick</div>
+                                <div class="locked-desc">Unlock VIP prop metrics and access all expert plays.</div>
+                                <button class="auth-btn" style="padding: 6px 12px; font-size:0.85rem;" onclick="toggleModal(true)">Sign In to View</button>
+                            </div>
+                        `;
+                        counts[league].paid++;
+                    }
+                } else {
+                    // HTML template card blueprint
+                    const cardHTML = `
+                        <div class="bet-card">
+                            <div class="bet-card-left">
+                                <div class="bet-card-player">${bet.player}</div>
+                                <div class="bet-card-details">${bet.over_under} <span>${bet.line}</span> ${bet.prop_type}</div>
+                            </div>
+                            <div class="bet-card-right">
+                                <div class="bet-card-odds">${bet.odds}</div>
+                                <div><span class="bet-card-book">${bet.sportsbook}</span></div>
+                            </div>
+                        </div>
+                    `;
+                    container.insertAdjacentHTML('beforeend', cardHTML);
+                    
+                    if (isPaid) counts[league].paid++;
+                    else counts[league].free++;
+                }
+            });
         }
 
         // Toggle UI display variations across navigation profiles
@@ -633,6 +815,7 @@
                 document.getElementById('adminForm').reset();
                 updatePropTypes();
                 toggleAdminModal(false);
+                fetchAndRenderBets(); // Refresh instantly on dashboard layout
             }
         }
 
