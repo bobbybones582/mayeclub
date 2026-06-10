@@ -440,19 +440,19 @@
         const SUPABASE_URL = "https://iytaqrpqdafqwolnfifp.supabase.co";
         const SUPABASE_ANON_KEY = "sb_publishable_bS8Iem5lEFZdrE3Ddnwe9Q_hlcWt0zR";
 
-        // Initialize Supabase Client
-        const supabase = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+        // Initialize Supabase Client directly from CDN global context
+        const supabaseClient = supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
 
         let isSignUpMode = false;
 
         // Automatically track and verify user login state (runs instantly on load & refresh)
         window.addEventListener('DOMContentLoaded', async () => {
             // Check for an active session cached in LocalStorage
-            const { data: { session }, error } = await supabase.auth.getSession();
+            const { data: { session }, error } = await supabaseClient.auth.getSession();
             updateUIForUser(session?.user || null);
 
             // Set up an active listener so if user state shifts anywhere, the page updates smoothly
-            supabase.auth.onAuthStateChange((event, session) => {
+            supabaseClient.auth.onAuthStateChange((event, session) => {
                 updateUIForUser(session?.user || null);
             });
         });
@@ -487,7 +487,7 @@
 
             if (isSignUpMode) {
                 // Register a brand new profile
-                const { data, error } = await supabase.auth.signUp({ email, password });
+                const { data, error } = await supabaseClient.auth.signUp({ email, password });
                 if (error) {
                     showError(error.message);
                 } else if (data.user && data.session === null) {
@@ -496,14 +496,14 @@
                 }
             } else {
                 // Authenticate existing credentials
-                const { error } = await supabase.auth.signInWithPassword({ email, password });
+                const { error } = await supabaseClient.auth.signInWithPassword({ email, password });
                 if (error) showError(error.message);
             }
         }
 
         // Handle Logout Action
         async function handleLogout() {
-            const { error } = await supabase.auth.signOut();
+            const { error } = await supabaseClient.auth.signOut();
             if (error) alert("Error logging out: " + error.message);
         }
 
