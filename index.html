@@ -354,6 +354,8 @@
             justify-content: space-between;
             align-items: center;
             transition: transform 0.2s ease;
+            position: relative;
+            overflow: hidden;
         }
 
         .bet-card:hover {
@@ -405,26 +407,46 @@
             border: 1px solid var(--border-color);
         }
 
-        /* VIP Locked Screen Styling */
-        .locked-vip-box {
-            text-align: center;
-            padding: 30px 15px;
-            border: 1px solid rgba(255, 215, 0, 0.2);
-            background: linear-gradient(180deg, rgba(22,25,37,1) 0%, rgba(27,24,17,0.3) 100%);
+        /* Secure Rectangle Overlay Blur Effect */
+        .blur-overlay {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(22, 25, 37, 0.7);
+            backdrop-filter: blur(12px) saturate(160%);
+            -webkit-backdrop-filter: blur(12px) saturate(160%);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            z-index: 5;
             border-radius: 8px;
         }
 
-        .locked-title {
+        .blur-content {
+            display: flex;
+            align-items: center;
+            gap: 8px;
             color: var(--primary-accent);
             font-weight: 700;
-            margin-bottom: 8px;
-            font-size: 1.1rem;
+            font-size: 0.95rem;
+            letter-spacing: 0.5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.5);
+            cursor: pointer;
         }
 
-        .locked-desc {
-            font-size: 0.85rem;
-            color: var(--text-muted);
-            margin-bottom: 15px;
+        .blur-content:hover {
+            text-decoration: underline;
+        }
+
+        /* Fake data text camouflage to prevent DOM scanning inspect-hacks */
+        .obfuscated-text {
+            user-select: none;
+            filter: blur(3px);
+            opacity: 0.15;
+            color: transparent !important;
+            text-shadow: 0 0 8px rgba(255,255,255,0.8);
         }
     </style>
 </head>
@@ -642,6 +664,7 @@
 
         let isSignUpMode = false;
         let currentUser = null;
+        let isUserVip = false; // Flag to track actual subscription state
 
         // Prop Categories Dictionary mapping directly to specific sports
         const propOptions = {
@@ -667,6 +690,7 @@
         async function handleStateTransition(user) {
             currentUser = user;
             let isAdmin = false;
+            isUserVip = false; // Reset to safe default
 
             if (user) {
                 const { data: profile } = await supabaseClient
@@ -676,6 +700,11 @@
                     .single();
                 
                 isAdmin = profile?.is_admin || false;
+                
+                // For development testing: Admins automatically see VIP picks
+                if (isAdmin) {
+                    isUserVip = true;
+                }
             }
             
             updateUIForUser(user, isAdmin);
@@ -694,7 +723,6 @@
                 return;
             }
 
-            // List of leagues and target elements
             const leagues = ['nba', 'nhl', 'mlb', 'wnba'];
             
             // Reset all containers to default empty states initially
@@ -703,7 +731,6 @@
                 document.getElementById(`${league}-paid-container`).innerHTML = `<div class="empty-message">No bets in this sport at the moment, check back later!</div>`;
             });
 
-            // Tracking count of picks added to columns to clear out "empty-state" messaging flags
             const counts = {
                 nba: { free: 0, paid: 0 },
                 nhl: { free: 0, paid: 0 },
@@ -721,37 +748,48 @@
                 if (isPaid && counts[league].paid === 0) container.innerHTML = "";
                 if (!isPaid && counts[league].free === 0) container.innerHTML = "";
 
-                if (isPaid && !currentUser) {
-                    // Lock VIP picks if the user is completely logged out
-                    if (counts[league].paid === 0) {
-                        container.innerHTML = `
-                            <div class="locked-vip-box">
-                                <div class="locked-title">🔒 MayeClub Premium Pick</div>
-                                <div class="locked-desc">Unlock VIP prop metrics and access all expert plays.</div>
-                                <button class="auth-btn" style="padding: 6px 12px; font-size:0.85rem;" onclick="toggleModal(true)">Sign In to View</button>
-                            </div>
-                        `;
-                        counts[league].paid++;
-                    }
-                } else {
-                    // HTML template card blueprint
-                    const cardHTML = `
-                        <div class="bet-card">
-                            <div class="bet-card-left">
-                                <div class="bet-card-player">${bet.player}</div>
-                                <div class="bet-card-details">${bet.over_under} <span>${bet.line}</span> ${bet.prop_type}</div>
-                            </div>
-                            <div class="bet-card-right">
-                                <div class="bet-card-odds">${bet.odds}</div>
-                                <div><span class="bet-card-book">${bet.sportsbook}</span></div>
+                // Determine if this pick should be securely locked behind a full rectangle blur
+                const shouldLock = isPaid && !isUserVip;
+
+                // Setup variables to hide real details if locked (anti-inspection layer)
+                const displayPlayer = shouldLock ? "╳╳╳╳╳ ╳╳╳╳╳" : bet.player;
+                const displayDetails = shouldLock ? "╳╳╳╳ ╳╳.╳ ╳╳╳╳╳" : `${bet.over_under} <span>${bet.line}</span> ${bet.prop_type}`;
+                const displayOdds = shouldLock ? "╳╳╳" : bet.odds;
+                const displayBook = shouldLock ? "╳╳╳╳" : bet.sportsbook;
+
+                // Build card structure
+                let cardHTML = `
+                    <div class="bet-card">
+                `;
+
+                // If locked, drop the clean blurred rectangle guard over the exact rectangle canvas
+                if (shouldLock) {
+                    cardHTML += `
+                        <div class="blur-overlay">
+                            <div class="blur-content" onclick="toggleModal(true)">
+                                🔒 Join MayeClub VIP
                             </div>
                         </div>
                     `;
-                    container.insertAdjacentHTML('beforeend', cardHTML);
-                    
-                    if (isPaid) counts[league].paid++;
-                    else counts[league].free++;
                 }
+
+                // Append card text bodies (using the obfuscated text helper class if locked)
+                cardHTML += `
+                        <div class="bet-card-left ${shouldLock ? 'obfuscated-text' : ''}">
+                            <div class="bet-card-player">${displayPlayer}</div>
+                            <div class="bet-card-details">${displayDetails}</div>
+                        </div>
+                        <div class="bet-card-right ${shouldLock ? 'obfuscated-text' : ''}">
+                            <div class="bet-card-odds">${displayOdds}</div>
+                            <div><span class="bet-card-book">${displayBook}</span></div>
+                        </div>
+                    </div>
+                `;
+
+                container.insertAdjacentHTML('beforeend', cardHTML);
+                
+                if (isPaid) counts[league].paid++;
+                else counts[league].free++;
             });
         }
 
